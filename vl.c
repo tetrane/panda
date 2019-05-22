@@ -1975,7 +1975,11 @@ static void main_loop(void)
             rr_do_end_record();
             rr_reset_state(first_cpu);
             rr_end_record_requested = 0;
-            vm_start();
+
+            if (rr_end_record_will_resume_vm) {
+                rr_end_record_will_resume_vm = 0;
+                vm_start();
+            }
         }
         if (rr_end_replay_requested && rr_in_replay()) {
             //mz restore timers

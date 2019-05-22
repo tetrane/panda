@@ -40,6 +40,7 @@ RR_debug_level_type rr_debug_level = RR_DEBUG_WHISPER;
 volatile sig_atomic_t rr_replay_requested = 0;
 volatile sig_atomic_t rr_record_requested = 0;
 volatile sig_atomic_t rr_end_record_requested = 0;
+volatile sig_atomic_t rr_end_record_will_resume_vm = 0;
 volatile sig_atomic_t rr_end_replay_requested = 0;
 char * rr_requested_name = NULL;
 

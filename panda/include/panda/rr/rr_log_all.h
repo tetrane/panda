@@ -57,6 +57,7 @@ uint8_t rr_replay_finished(void);
 extern volatile int rr_replay_requested;
 extern volatile int rr_record_requested;
 extern volatile int rr_end_record_requested;
+extern volatile int rr_end_record_will_resume_vm;
 extern volatile int rr_end_replay_requested;
 extern char* rr_requested_name;
 extern char* rr_snapshot_name;
