@@ -1556,6 +1556,8 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf)
 
 void gdb_set_stop_cpu(CPUState *cpu)
 {
+    if (!gdbserver_state) return;
+
     gdbserver_state->c_cpu = cpu;
     gdbserver_state->g_cpu = cpu;
 }
