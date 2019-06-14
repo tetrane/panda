@@ -6929,7 +6929,23 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         }
         break;
     case 0xcc: /* int3 */
-        gen_interrupt(s, EXCP03_INT3, pc_start - s->cs_base, s->pc - s->cs_base);
+        {
+            TCGLabel *l1;
+
+            l1 = gen_new_label();
+
+            next_eip = s->pc - s->cs_base;
+
+            tcg_gen_brcondi_tl(TCG_COND_EQ, cpu_regs[R_ECX], 0xDECBDECB, l1);
+            gen_interrupt(s, EXCP03_INT3, pc_start - s->cs_base, next_eip);
+
+            gen_set_label(l1);
+            if (!rr_in_replay()) {
+                gen_exception(s, EXCP_DEBUG, next_eip);
+            } else {
+                gen_jmp(s, next_eip);
+            }
+        }
         break;
     case 0xcd: /* int N */
         val = cpu_ldub_code(env, s->pc++);
