@@ -2616,3 +2616,20 @@ void hmp_info_vm_generation_id(Monitor *mon, const QDict *qdict)
     hmp_handle_error(mon, &err);
     qapi_free_GuidInfo(info);
 }
+
+void hmp_open_vmi(Monitor *mon, const QDict *qdict)
+{
+    const char *vmi_socket_path = qdict_get_str(qdict, "socket");
+    Error *err = NULL;
+
+    qmp_open_vmi(vmi_socket_path, &err);
+    hmp_handle_error(mon, &err);
+}
+
+void hmp_close_vmi(Monitor *mon, const QDict *qdict)
+{
+    Error *err = NULL;
+
+    qmp_close_vmi(&err);
+    hmp_handle_error(mon, &err);
+}

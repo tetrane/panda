@@ -1846,6 +1846,22 @@ ETEXI
         .cmd        = hmp_panda_plugin_cmd,
     },
 
+    {
+        .name       = "open_vmi",
+        .args_type  = "socket:s",
+        .params     = "[socket]",
+        .help       = "Open a unix socket for VMI server",
+        .cmd = hmp_open_vmi,
+    },
+
+    {
+        .name       = "close_vmi",
+        .args_type  = "",
+        .params     = "",
+        .help       = "Close VMI socket",
+        .cmd = hmp_close_vmi,
+    },
+
 STEXI
 @end table
 ETEXI
