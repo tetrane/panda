@@ -93,6 +93,7 @@ int main(int argc, char **argv)
 #include "sysemu/sysemu.h"
 #include "sysemu/numa.h"
 #include "exec/gdbstub.h"
+#include "exec/reven-vmi.h"
 #include "qemu/timer.h"
 #include "sysemu/char.h"
 #include "qemu/bitmap.h"
@@ -2498,6 +2499,7 @@ struct device_config {
         DEV_DEBUGCON,  /* -debugcon */
         DEV_GDB,       /* -gdb, -s */
         DEV_SCLP,      /* s390 sclp */
+        DEV_VMI,       /* -vmi */
     } type;
     const char *cmdline;
     Location loc;
@@ -3473,6 +3475,9 @@ int main(int argc, char **argv, char **envp)
                 break;
             case QEMU_OPTION_gdb:
                 add_device_config(DEV_GDB, optarg);
+                break;
+            case QEMU_OPTION_vmi:
+                add_device_config(DEV_VMI, optarg);
                 break;
             case QEMU_OPTION_L:
                 if (is_help_option(optarg)) {
@@ -4812,6 +4817,10 @@ int main(int argc, char **argv, char **envp)
     }
 
     if (foreach_device_config(DEV_GDB, gdbserver_start) < 0) {
+        exit(1);
+    }
+
+    if (foreach_device_config(DEV_VMI, vmiserver_start) < 0) {
         exit(1);
     }
 

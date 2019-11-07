@@ -6120,3 +6120,36 @@
 # BDG 20120822
 ##
 { 'command': 'plugin_cmd', 'data': { 'cmd': 'str' } }
+
+##
+# @open_vmi:
+#
+# Enable debugging via a Unix socket
+#
+# @socket: name of Unix socket pipe
+#
+# Returns: nothing.
+#
+# Example:
+#
+# -> { "execute": "open_vmi",
+#      "arguments": { "socket": "/tmp/reven_vmi" } }
+# <- { "return": true }
+#
+##
+{ 'command': 'open_vmi', 'data': { 'socket': 'str' } }
+
+##
+# @close_vmi:
+#
+# Disable debugging via a Unix socket
+#
+# Returns: nothing.
+#
+# Example:
+#
+# -> { "execute": "close_vmi" }
+# <- { "return": {} }
+#
+##
+{ 'command': 'close_vmi' }

@@ -3213,6 +3213,17 @@ Shorthand for -gdb tcp::1234, i.e. open a gdbserver on TCP port 1234
 (@pxref{gdb_usage}).
 ETEXI
 
+DEF("vmi", HAS_ARG, QEMU_OPTION_vmi, \
+    "-vmi dev        wait for vmi connection on 'dev'\n", QEMU_ARCH_I386)
+STEXI
+@item -vmi @var{dev}
+@findex -vmi
+Wait for vmi connection on device @var{dev}.
+@example
+(gdb) qemu-system-x86_64 -vmi tcp:: " DEFAULT_VMI_PORT "\n" ...
+@end example
+ETEXI
+
 DEF("d", HAS_ARG, QEMU_OPTION_d, \
     "-d item1,...    enable logging of specified items (use '-d help' for a list of log items)\n",
     QEMU_ARCH_ALL)

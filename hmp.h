@@ -150,4 +150,8 @@ void hmp_panda_load_plugin(Monitor *mon, const QDict *qdict);
 void hmp_panda_unload_plugin(Monitor *mon, const QDict *qdict);
 void hmp_panda_list_plugins(Monitor *mon, const QDict *qdict);
 
+// Reven VMI
+void hmp_open_vmi(Monitor *mon, const QDict *qdict);
+void hmp_close_vmi(Monitor *mon, const QDict *qdict);
+
 #endif
