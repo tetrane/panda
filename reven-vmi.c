@@ -7,8 +7,9 @@
 #include "sysemu/char.h"
 #include "monitor/monitor.h"
 
-#include "exec/reven-vmi.h"
+#include <rvnvmicomm_server/vmiserver.h>
 #include "reven-vmi-handlers.c"
+#include "rvnvmicomm/src/server/vmiserver.c"
 
 static const char TYPE_CHARDEV_VMI[] = "chardev-vmi";
 static const char ID_CHARDEV_VMI[] = "vmi";
@@ -19,7 +20,7 @@ void __attribute__((nonnull(1, 2))) qmp_open_vmi(const char *socket_path, Error 
 {
 	char device[128] = { 0 };
 	snprintf(device, sizeof(device), "unix:%s", socket_path);
-	if (vmiserver_start(device) != 0) {
+	if (vmis_start(device) != 0) {
 		int errsv = errno;
 		if (errsv != 0) {
 			error_setg(errp, "VMI initialization failed: %s", strerror(errsv));
@@ -75,7 +76,7 @@ static int vmi_chr_can_receive(void *opaque)
 }
 
 // response: [data length: 4 bytes] + [data buffer: data length]
-static void put_response(const uint8_t *buf, uint32_t size)
+extern void vmis_cb_put_response(const uint8_t *buf, uint32_t size)
 {
 	if (size > 0) {
 		// size of header is included in the response length
@@ -91,13 +92,6 @@ static void put_response(const uint8_t *buf, uint32_t size)
 		qemu_chr_fe_write_all(&chr_backend, (const uint8_t*)&size, sizeof(uint32_t));
 	}
 }
-
-static inline void put_empty_response(void)
-{
-	put_response(NULL, 0);
-}
-
-#define put_typed_response(resp) put_response((const uint8_t*)resp, sizeof(*(resp)))
 
 static void sync_wait_callback(void *opaque, int running, RunState state)
 {
@@ -121,132 +115,16 @@ static void sync_wait_callback(void *opaque, int running, RunState state)
 	}
 }
 
-static void handle_request(const vmi_request_t *req)
+extern void vmis_cb_enable_sync_wait(void)
+{
+	sync_wait_handler = qemu_add_vm_change_state_handler(sync_wait_callback, NULL);
+}
+
+extern void vmis_cb_disable_sync_wait(void)
 {
 	if (sync_wait_handler) {
 		qemu_del_vm_change_state_handler(sync_wait_handler);
 		sync_wait_handler = NULL;
-	}
-
-	switch (req->request_type)
-	{
-	case MEM_READ: {
-		uint32_t mem_size = req->request_data.memory_size;
-		if (mem_size == 0) {
-			put_empty_response();
-		} else {
-			uint8_t *buf = g_malloc(mem_size);
-			if (read_virtual_memory(req->request_data.virtual_address, mem_size, buf) >= 0) {
-				put_response(buf, mem_size);
-			} else {
-				put_empty_response();
-			}
-			g_free(buf);
-		}
-		return;
-	}
-
-	case REG_READ: {
-		union {
-			uint64_t reg_val_64;
-			uint32_t reg_val_32;
-		} reg_val;
-		int reg_size = read_register(req->request_data.register_group, req->request_data.register_id, &reg_val.reg_val_64);
-		switch (reg_size)
-		{
-		case 8:
-			put_typed_response(&reg_val.reg_val_64);
-			break;
-
-		case 4:
-			put_typed_response(&reg_val.reg_val_32);
-			break;
-
-		default:
-			put_empty_response();
-			break;
-		}
-		return;
-	}
-
-	case BP: {
-		int bp_err;
-		switch (req->request_action)
-		{
-		case SET:
-			bp_err = set_breakpoint(req->request_data.virtual_address);
-			break;
-
-		case REM:
-			bp_err = remove_breakpoint(req->request_data.virtual_address);
-			break;
-
-		case REM_ALL:
-			bp_err = remove_all_breakpoints();
-			break;
-
-		default:
-			return put_empty_response();
-		}
-
-		return put_typed_response(&bp_err);
-	}
-
-	case WP_READ:
-	case WP_WRITE: {
-		int wp_err;
-		switch (req->request_action)
-		{
-		case SET:
-			wp_err = set_watchpoint(req->request_data.virtual_address, req->request_data.memory_size, req->request_type);
-			break;
-
-		case REM:
-			wp_err = remove_watchpoint(req->request_data.virtual_address, req->request_data.memory_size);
-			break;
-
-		case REM_ALL:
-			wp_err = remove_all_watchpoints();
-			break;
-
-		default:
-			return put_empty_response();
-		}
-
-		return put_typed_response(&wp_err);
-	}
-
-	case EXEC: {
-		int ex_err;
-		switch (req->request_action)
-		{
-		case PAUSE:
-			ex_err = pause_vm();
-			break;
-
-		case STEP:
-			sync_wait_handler = qemu_add_vm_change_state_handler(sync_wait_callback, NULL);
-			ex_err = step_vm();
-			return; // no immediate response
-
-		case CONTINUE:
-			sync_wait_handler = qemu_add_vm_change_state_handler(sync_wait_callback, NULL);
-			ex_err = continue_async_vm();
-			return; // no immediate response
-
-		case CONTINUE_ASYNC:
-			ex_err = continue_async_vm();
-			break; // response immediately
-
-		default:
-			return put_empty_response();
-		}
-
-		return put_typed_response(&ex_err);
-	}
-
-	default:
-		return put_empty_response();
 	}
 }
 
@@ -259,7 +137,7 @@ static void vmi_chr_receive(void *opaque, const uint8_t *buf, int size)
 	} else {
 		// type punning
 		memcpy(&req, buf, size);
-		handle_request(&req);
+		vmis_handle_request(&req);
 	}
 }
 
@@ -268,7 +146,7 @@ static void vmi_chr_event(void *opaque, int event)
 	return;
 }
 
-int vmiserver_start(const char *device)
+extern int vmis_start(const char *device)
 {
 	char vmi_device_name[128] = {0};
 	Chardev *chr_dev;

@@ -1,13 +1,13 @@
 #include "panda/plugin.h"
 
 // return: 0 if ok, otherwise < 0
-static __attribute__((nonnull(3))) int read_virtual_memory(uint64_t va, uint32_t len, uint8_t * buffer)
+extern __attribute__((nonnull(3))) int vmis_cb_read_virtual_memory(uint64_t va, uint32_t len, uint8_t * buffer)
 {
 	return panda_virtual_memory_read(first_cpu, va, buffer, len);
 }
 
 // return: register size if ok, otherwise < 0
-static __attribute__((nonnull(3))) int read_register(int32_t reg_group, int32_t reg_id, uint64_t * reg_val)
+extern __attribute__((nonnull(3))) int vmis_cb_read_register(int32_t reg_group, int32_t reg_id, uint64_t * reg_val)
 {
 	X86CPU * cpu = X86_CPU(first_cpu);
 	CPUX86State * env = &cpu->env;
@@ -44,15 +44,15 @@ static __attribute__((nonnull(3))) int read_register(int32_t reg_group, int32_t 
 	case MSR:
 		switch (reg_id)
 		{
-		case X86_MSR_LSTAR:
+		case MSR_LSTAR:
 			*reg_val = env->lstar;
 			return sizeof(env->lstar);
 
-		case X86_MSR_GSBASE:
+		case MSR_GSBASE:
 			*reg_val = env->segs[R_GS].base;
 			return sizeof(env->segs[R_GS].base);
 
-		case X86_MSR_KERNELGSBASE:
+		case MSR_KERNELGSBASE:
 			*reg_val = env->kernelgsbase;
 			return sizeof(env->kernelgsbase);
 
@@ -66,24 +66,24 @@ static __attribute__((nonnull(3))) int read_register(int32_t reg_group, int32_t 
 }
 
 // return: always 0
-static int set_breakpoint(uint64_t va)
+extern int vmis_cb_set_breakpoint(uint64_t va)
 {
 	return cpu_breakpoint_insert(first_cpu, va, BP_GDB, NULL);
 }
 
 // return: 0 if ok, otherwise < 0
-static int remove_breakpoint(uint64_t va)
+extern int vmis_cb_remove_breakpoint(uint64_t va)
 {
 	return cpu_breakpoint_remove(first_cpu, va, BP_GDB);
 }
 
-static int remove_all_breakpoints(void)
+extern int vmis_cb_remove_all_breakpoints(void)
 {
 	cpu_breakpoint_remove_all(first_cpu, BP_GDB);
 	return 0; // always success
 }
 
-static int set_watchpoint(uint64_t va, uint32_t len, int wp)
+extern int vmis_cb_set_watchpoint(uint64_t va, uint32_t len, int wp)
 {
 	switch (wp) {
 		case WP_READ:
@@ -96,18 +96,18 @@ static int set_watchpoint(uint64_t va, uint32_t len, int wp)
 	}
 }
 
-static int remove_watchpoint(uint64_t va, uint32_t len)
+extern int vmis_cb_remove_watchpoint(uint64_t va)
 {
-	return cpu_watchpoint_remove(first_cpu, va, len, BP_GDB);
+	return cpu_watchpoint_remove(first_cpu, va, 0, BP_GDB);
 }
 
-static int remove_all_watchpoints(void)
+extern int vmis_cb_remove_all_watchpoints(void)
 {
 	cpu_watchpoint_remove_all(first_cpu, BP_GDB);
 	return 0; // always success
 }
 
-static int pause_vm(void)
+extern int vmis_cb_pause_vm(void)
 {
 	if (runstate_is_running()) {
 		return vm_stop(RUN_STATE_PAUSED);
@@ -115,7 +115,7 @@ static int pause_vm(void)
 	return 0;
 }
 
-static int step_vm(void)
+extern int vmis_cb_step_vm(void)
 {
 	cpu_single_step(first_cpu, SSTEP_ENABLE | SSTEP_NOIRQ | SSTEP_NOTIMER);
 	if (!runstate_needs_reset()) {
@@ -124,7 +124,7 @@ static int step_vm(void)
 	return 0; // always success
 }
 
-static int continue_async_vm(void)
+extern int vmis_cb_continue_async_vm(void)
 {
 	if (!runstate_needs_reset()) {
 		cpu_single_step(first_cpu, 0); // disable single step (if the VM is in)

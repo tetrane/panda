@@ -37,6 +37,8 @@ QEMU_LOCAL_INCLUDES = -I$(BUILD_DIR)/$(@D) -I$(@D)
 # Include PANDA headers.
 QEMU_INCLUDES += -I$(SRC_PATH)/panda/include
 
+QEMU_INCLUDES += -I$(SRC_PATH)/rvnvmicomm/include
+
 WL_U := -Wl,-u,
 find-symbols = $(if $1, $(sort $(shell $(NM) -P -g $1 | $2)))
 defined-symbols = $(call find-symbols,$1,awk '$$2!="U"{print $$1}')

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 #include "sysemu/sysemu.h"
 #include "sysemu/numa.h"
 #include "exec/gdbstub.h"
-#include "exec/reven-vmi.h"
+#include "rvnvmicomm_server/vmiserver.h"
 #include "qemu/timer.h"
 #include "sysemu/char.h"
 #include "qemu/bitmap.h"
@@ -4958,7 +4958,7 @@ int main_aux(int argc, char **argv, char **envp, PandaMainMode pmm)
         exit(1);
     }
 
-    if (foreach_device_config(DEV_VMI, vmiserver_start) < 0) {
+    if (foreach_device_config(DEV_VMI, vmis_start) < 0) {
         exit(1);
     }
 

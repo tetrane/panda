@@ -34,3 +34,6 @@
 [submodule "roms/skiboot"]
 	path = roms/skiboot
 	url = git://git.qemu.org/skiboot.git
+[submodule "rvnvmicomm"]
+	path = rvnvmicomm
+	url = git@gitlab.tetrane.rd:tetrane/rvnvmicomm.git
