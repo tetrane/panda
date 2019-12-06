@@ -9,7 +9,7 @@
 
 #include <rvnvmicomm_server/vmiserver.h>
 #include "reven-vmi-handlers.c"
-#include "rvnvmicomm/src/server/vmiserver.c"
+#include "../common/rvnvmicomm/src/server/vmiserver.c"
 
 static const char TYPE_CHARDEV_VMI[] = "chardev-vmi";
 static const char ID_CHARDEV_VMI[] = "vmi";
