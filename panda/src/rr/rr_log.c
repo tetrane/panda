@@ -51,6 +51,8 @@
 #include "migration/qemu-file.h"
 #include "io/channel-file.h"
 #include "sysemu/sysemu.h"
+
+#include "panda/callback_support.h"
 /******************************************************************************************/
 /* GLOBALS */
 /******************************************************************************************/
@@ -962,8 +964,10 @@ void rr_replay_skipped_calls_internal(RR_callsite_id call_site)
                 host_buf = cpu_physical_memory_map(
                     args.variant.cpu_mem_unmap.addr, &plen,
                     /*is_write=*/1);
+                panda_callbacks_before_dma(current_cpu, args.variant.cpu_mem_unmap.addr, host_buf, plen, 1);
                 memcpy(host_buf, args.variant.cpu_mem_unmap.buf,
                        args.variant.cpu_mem_unmap.len);
+                panda_callbacks_after_dma(current_cpu, args.variant.cpu_mem_unmap.addr, host_buf, plen, 1);
                 cpu_physical_memory_unmap(host_buf, plen,
                                           /*is_write=*/1,
                                           args.variant.cpu_mem_unmap.len);

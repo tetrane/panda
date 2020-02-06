@@ -67,6 +67,8 @@
 #include <zlib.h>
 #include "panda/callback_support.h"
 
+extern bool panda_use_memcb;
+
 //#define DEBUG_SUBPAGE
 
 #if !defined(CONFIG_USER_ONLY)

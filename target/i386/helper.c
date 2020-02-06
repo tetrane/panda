@@ -30,6 +30,7 @@
 #endif
 
 #include "panda/callback_support.h"
+extern bool panda_use_memcb;
 
 static void cpu_x86_version(CPUX86State *env, int *family, int *model)
 {
@@ -55,6 +56,15 @@ int cpu_x86_support_mca_broadcast(CPUX86State *env)
     }
 
     return 0;
+}
+
+static void* get_host_ptr(CPUState *cs, hwaddr addr)
+{
+    MemoryRegion *mr;
+    hwaddr l = 4;
+    hwaddr addr1;
+    mr = address_space_translate(cs->as, addr, &addr1, &l, true);
+    return qemu_map_ram_ptr(mr->ram_block, addr1);
 }
 
 /***********************************************************/
@@ -1440,9 +1450,17 @@ void x86_stb_phys(CPUState *cs, hwaddr addr, uint8_t val)
     X86CPU *cpu = X86_CPU(cs);
     CPUX86State *env = &cpu->env;
 
+    void* ptr = get_host_ptr(cs, addr);
+
+    if (panda_use_memcb)
+        panda_callbacks_before_dma(cs, addr, (void*)ptr, 1, 1);
+
     address_space_stb(cs->as, addr, val,
                       cpu_get_mem_attrs(env),
                       NULL);
+
+    if (panda_use_memcb)
+        panda_callbacks_after_dma(cs, addr, (void*)ptr, 1, 1);
 }
 
 void x86_stl_phys_notdirty(CPUState *cs, hwaddr addr, uint32_t val)
@@ -1450,9 +1468,16 @@ void x86_stl_phys_notdirty(CPUState *cs, hwaddr addr, uint32_t val)
     X86CPU *cpu = X86_CPU(cs);
     CPUX86State *env = &cpu->env;
 
+    void* ptr = get_host_ptr(cs, addr);
+
+    if (panda_use_memcb)
+        panda_callbacks_before_dma(cs, addr, (void*)ptr, 4, 1);
+
     address_space_stl_notdirty(cs->as, addr, val,
                                cpu_get_mem_attrs(env),
                                NULL);
+    if (panda_use_memcb)
+        panda_callbacks_after_dma(cs, addr, (void*)ptr, 4, 1);
 }
 
 void x86_stw_phys(CPUState *cs, hwaddr addr, uint32_t val)
@@ -1460,9 +1485,17 @@ void x86_stw_phys(CPUState *cs, hwaddr addr, uint32_t val)
     X86CPU *cpu = X86_CPU(cs);
     CPUX86State *env = &cpu->env;
 
+    void* ptr = get_host_ptr(cs, addr);
+
+    if (panda_use_memcb)
+        panda_callbacks_before_dma(cs, addr, (void*)ptr, 2, 1);
+
     address_space_stw(cs->as, addr, val,
                       cpu_get_mem_attrs(env),
                       NULL);
+
+    if (panda_use_memcb)
+        panda_callbacks_after_dma(cs, addr, (void*)ptr, 2, 1);
 }
 
 void x86_stl_phys(CPUState *cs, hwaddr addr, uint32_t val)
@@ -1470,9 +1503,17 @@ void x86_stl_phys(CPUState *cs, hwaddr addr, uint32_t val)
     X86CPU *cpu = X86_CPU(cs);
     CPUX86State *env = &cpu->env;
 
+    void* ptr = get_host_ptr(cs, addr);
+
+    if (panda_use_memcb)
+        panda_callbacks_before_dma(cs, addr, (void*)ptr, 4, 1);
+
     address_space_stl(cs->as, addr, val,
                       cpu_get_mem_attrs(env),
                       NULL);
+
+    if (panda_use_memcb)
+        panda_callbacks_after_dma(cs, addr, (void*)ptr, 4, 1);
 }
 
 void x86_stq_phys(CPUState *cs, hwaddr addr, uint64_t val)
@@ -1480,8 +1521,16 @@ void x86_stq_phys(CPUState *cs, hwaddr addr, uint64_t val)
     X86CPU *cpu = X86_CPU(cs);
     CPUX86State *env = &cpu->env;
 
+    void* ptr = get_host_ptr(cs, addr);
+
+    if (panda_use_memcb)
+        panda_callbacks_before_dma(cs, addr, (void*)ptr, 8, 1);
+
     address_space_stq(cs->as, addr, val,
                       cpu_get_mem_attrs(env),
                       NULL);
+
+    if (panda_use_memcb)
+        panda_callbacks_after_dma(cs, addr, (void*)ptr, 8, 1);
 }
 #endif
