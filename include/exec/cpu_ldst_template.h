@@ -29,6 +29,8 @@
 #endif
 
 #include "trace/mem.h"
+#include "panda/plugin.h"
+#include "panda/callbacks/cb-support.h"
 
 #if DATA_SIZE == 8
 #define SUFFIX q
@@ -67,11 +69,13 @@
 #define MMUSUFFIX _cmmu
 #define URETSUFFIX SUFFIX
 #define SRETSUFFIX SUFFIX
+#define PANDASUFFIX
 #else
 #define ADDR_READ addr_read
 #define MMUSUFFIX _mmu
 #define URETSUFFIX USUFFIX
 #define SRETSUFFIX glue(s, SUFFIX)
+#define PANDASUFFIX _panda
 #endif
 
 /* generic load/store macros */
@@ -99,11 +103,19 @@ glue(glue(glue(cpu_ld, USUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
     if (unlikely(env->tlb_table[mmu_idx][page_index].ADDR_READ !=
                  (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
         oi = make_memop_idx(SHIFT, mmu_idx);
-        res = glue(glue(helper_ret_ld, URETSUFFIX), MMUSUFFIX)(env, addr,
-                                                            oi, retaddr);
+        res = glue(glue(glue(helper_ret_ld, URETSUFFIX), MMUSUFFIX), PANDASUFFIX)
+                                (env, addr, oi, retaddr);
     } else {
+        CPUState *cpu = ENV_GET_CPU(env);
         uintptr_t hostaddr = addr + env->tlb_table[mmu_idx][page_index].addend;
+
+        if (panda_use_memcb)
+            panda_callbacks_mem_before_read(cpu, cpu->panda_guest_pc, addr, DATA_SIZE, (void *)hostaddr);
+
         res = glue(glue(ld, USUFFIX), _p)((uint8_t *)hostaddr);
+
+        if (panda_use_memcb)
+            panda_callbacks_mem_after_read(cpu, cpu->panda_guest_pc, addr, DATA_SIZE, res, (void *)hostaddr);
     }
     return res;
 }
@@ -179,11 +191,19 @@ glue(glue(glue(cpu_st, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
     if (unlikely(env->tlb_table[mmu_idx][page_index].addr_write !=
                  (addr & (TARGET_PAGE_MASK | (DATA_SIZE - 1))))) {
         oi = make_memop_idx(SHIFT, mmu_idx);
-        glue(glue(helper_ret_st, SUFFIX), MMUSUFFIX)(env, addr, v, oi,
+        glue(glue(glue(helper_ret_st, SUFFIX), MMUSUFFIX), _panda)(env, addr, v, oi,
                                                      retaddr);
     } else {
+        CPUState *cpu = ENV_GET_CPU(env);
         uintptr_t hostaddr = addr + env->tlb_table[mmu_idx][page_index].addend;
+
+        if (panda_use_memcb)
+            panda_callbacks_mem_before_write(cpu, cpu->panda_guest_pc, addr, DATA_SIZE, (uint64_t)v, (void *)hostaddr);
+
         glue(glue(st, SUFFIX), _p)((uint8_t *)hostaddr, v);
+
+        if (panda_use_memcb)
+            panda_callbacks_mem_after_write(cpu, cpu->panda_guest_pc, addr, DATA_SIZE, (uint64_t)v, (void *)hostaddr);
     }
 }
 
@@ -206,4 +226,5 @@ glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
 #undef ADDR_READ
 #undef URETSUFFIX
 #undef SRETSUFFIX
+#undef PANDASUFFIX
 #undef SHIFT
