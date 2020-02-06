@@ -27,7 +27,7 @@
 
 #ifdef CONFIG_SOFTMMU
 #include "panda/rr/rr_log.h"
-extern bool panda_update_pc;
+#include "panda/plugin.h"
 #endif
 
 #include "panda/callback_support.h"

@@ -74,6 +74,13 @@
 
 #endif
 
+#if defined(CONFIG_SOFTMMU)
+typedef struct TranslationBlock TranslationBlock;
+typedef struct TBContext TBContext;
+#include "panda/callback_support.h"
+#include "panda/plugin.h"
+#endif
+
 #if defined(CONFIG_USER_ONLY)
 
 /* In user-only mode we provide only the _code and _data accessors. */
