@@ -132,6 +132,37 @@ static inline hwaddr get_paddr(CPUState *cpu, target_ulong addr, void *ram_ptr) 
     }
 }
 
+typedef struct {
+    struct {
+        hwaddr paddr;
+        uint32_t size;
+        uint64_t val;
+    } page1;
+    struct {
+        hwaddr paddr;
+        uint32_t size;
+        uint64_t val;
+    } page2;
+} split_page;
+
+bool split_in_two_pages(CPUState *env, target_ulong addr, uint32_t data_size, void* ram_ptr, uint64_t result, split_page* split);
+
+bool split_in_two_pages(CPUState *env, target_ulong addr, uint32_t data_size, void* ram_ptr, uint64_t result, split_page* split)
+{
+    if (! unlikely((addr & ~TARGET_PAGE_MASK) + data_size - 1 >= TARGET_PAGE_SIZE))
+        return false;
+
+    // The value val being accessed at virtual address `addr` spans on two physical pages, split it.
+    split->page2.size = (addr & ~TARGET_PAGE_MASK) + data_size - TARGET_PAGE_SIZE;
+    split->page1.size = data_size - split->page2.size;
+    split->page1.paddr = get_paddr(env, addr, ram_ptr);
+    split->page2.paddr = get_paddr(env, addr + split->page1.size, NULL);
+    split->page1.val = result & ((1ul << (split->page1.size * 8)) - 1);
+    split->page2.val = result >> split->page1.size * 8;
+
+    return true;
+}
+
 // These are used in softmmu_template.h
 // ram_ptr is a possible pointer into host memory from the TLB code. Can be NULL.
 void panda_callbacks_before_mem_read(CPUState *env, target_ulong pc,
@@ -144,11 +175,19 @@ void panda_callbacks_before_mem_read(CPUState *env, target_ulong pc,
                                           data_size);
     }
     if (panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_READ]) {
-        hwaddr paddr = get_paddr(env, addr, ram_ptr);
-        for(plist = panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_READ]; plist != NULL;
-            plist = panda_cb_list_next(plist)) {
-            plist->entry.phys_mem_before_read(env, env->panda_guest_pc, paddr,
-                                              data_size);
+        split_page split;
+        if (split_in_two_pages(env, addr, data_size, ram_ptr, 0, &split)) {
+            for (plist = panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_READ]; plist != NULL; plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_before_read(env, env->panda_guest_pc, split.page1.paddr, split.page1.size);
+                plist->entry.phys_mem_before_read(env, env->panda_guest_pc, split.page2.paddr, split.page2.size);
+            }
+        } else {
+            hwaddr paddr = get_paddr(env, addr, ram_ptr);
+            for(plist = panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_READ]; plist != NULL;
+                plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_before_read(env, env->panda_guest_pc, paddr,
+                                                 data_size);
+            }
         }
     }
 }
@@ -164,11 +203,19 @@ void panda_callbacks_after_mem_read(CPUState *env, target_ulong pc,
                                          data_size, &result);
     }
     if (panda_cbs[PANDA_CB_PHYS_MEM_AFTER_READ]) {
-        hwaddr paddr = get_paddr(env, addr, ram_ptr);
-        for(plist = panda_cbs[PANDA_CB_PHYS_MEM_AFTER_READ]; plist != NULL;
-            plist = panda_cb_list_next(plist)) {
-            plist->entry.phys_mem_after_read(env, env->panda_guest_pc, paddr,
-                                             data_size, &result);
+        split_page split;
+        if (split_in_two_pages(env, addr, data_size, ram_ptr, result, &split)) {
+            for (plist = panda_cbs[PANDA_CB_PHYS_MEM_AFTER_READ]; plist != NULL; plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_after_read(env, env->panda_guest_pc, split.page1.paddr, split.page1.size, &split.page1.val);
+                plist->entry.phys_mem_after_read(env, env->panda_guest_pc, split.page2.paddr, split.page2.size, &split.page2.val);
+            }
+        } else {
+            hwaddr paddr = get_paddr(env, addr, ram_ptr);
+            for(plist = panda_cbs[PANDA_CB_PHYS_MEM_AFTER_READ]; plist != NULL;
+                plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_after_read(env, env->panda_guest_pc, paddr,
+                                                 data_size, &result);
+            }
         }
     }
 }
@@ -184,11 +231,17 @@ void panda_callbacks_before_mem_write(CPUState *env, target_ulong pc,
                                            data_size, &val);
     }
     if (panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_WRITE]) {
-        hwaddr paddr = get_paddr(env, addr, ram_ptr);
-        for(plist = panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_WRITE]; plist != NULL;
-            plist = panda_cb_list_next(plist)) {
-            plist->entry.phys_mem_before_write(env, env->panda_guest_pc, paddr,
-                                               data_size, &val);
+        split_page split;
+        if (split_in_two_pages(env, addr, data_size, ram_ptr, val, &split)) {
+            for (plist = panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_WRITE]; plist != NULL; plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_before_write(env, env->panda_guest_pc, split.page1.paddr, split.page1.size, &split.page1.val);
+                plist->entry.phys_mem_before_write(env, env->panda_guest_pc, split.page2.paddr, split.page2.size, &split.page2.val);
+            }
+        } else {
+            hwaddr paddr = get_paddr(env, addr, ram_ptr);
+            for (plist = panda_cbs[PANDA_CB_PHYS_MEM_BEFORE_WRITE]; plist != NULL; plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_before_write(env, env->panda_guest_pc, paddr, data_size, &val);
+            }
         }
     }
 }
@@ -204,11 +257,17 @@ void panda_callbacks_after_mem_write(CPUState *env, target_ulong pc,
                                           data_size, &val);
     }
     if (panda_cbs[PANDA_CB_PHYS_MEM_AFTER_WRITE]) {
-        hwaddr paddr = get_paddr(env, addr, ram_ptr);
-        for(plist = panda_cbs[PANDA_CB_PHYS_MEM_AFTER_WRITE]; plist != NULL;
-            plist = panda_cb_list_next(plist)) {
-            plist->entry.phys_mem_after_write(env, env->panda_guest_pc, paddr,
-                                              data_size, &val);
+        split_page split;
+        if (split_in_two_pages(env, addr, data_size, ram_ptr, val, &split)) {
+            for (plist = panda_cbs[PANDA_CB_PHYS_MEM_AFTER_WRITE]; plist != NULL; plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_after_write(env, env->panda_guest_pc, split.page1.paddr, split.page1.size, &split.page1.val);
+                plist->entry.phys_mem_after_write(env, env->panda_guest_pc, split.page2.paddr, split.page2.size, &split.page2.val);
+            }
+        } else {
+            hwaddr paddr = get_paddr(env, addr, ram_ptr);
+            for (plist = panda_cbs[PANDA_CB_PHYS_MEM_AFTER_WRITE]; plist != NULL; plist = panda_cb_list_next(plist)) {
+                plist->entry.phys_mem_after_write(env, env->panda_guest_pc, paddr, data_size, &val);
+            }
         }
     }
 }
