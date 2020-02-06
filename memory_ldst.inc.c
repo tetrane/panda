@@ -55,6 +55,8 @@ static inline uint32_t glue(address_space_ldl_internal, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 4, false);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
             val = ldl_le_p(ptr);
@@ -66,6 +68,8 @@ static inline uint32_t glue(address_space_ldl_internal, SUFFIX)(ARG1_DECL,
             val = ldl_p(ptr);
             break;
         }
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 4, false);
         r = MEMTX_OK;
     }
     if (result) {
@@ -153,6 +157,8 @@ static inline uint64_t glue(address_space_ldq_internal, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 8, false);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
             val = ldq_le_p(ptr);
@@ -164,6 +170,8 @@ static inline uint64_t glue(address_space_ldq_internal, SUFFIX)(ARG1_DECL,
             val = ldq_p(ptr);
             break;
         }
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 8, false);
         r = MEMTX_OK;
     }
     if (result) {
@@ -240,7 +248,11 @@ uint32_t glue(address_space_ldub, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 1, false);
         val = ldub_p(ptr);
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 1, false);
         r = MEMTX_OK;
     }
     if (result) {
@@ -295,6 +307,8 @@ static inline uint32_t glue(address_space_lduw_internal, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 2, false);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
             val = lduw_le_p(ptr);
@@ -306,6 +320,8 @@ static inline uint32_t glue(address_space_lduw_internal, SUFFIX)(ARG1_DECL,
             val = lduw_p(ptr);
             break;
         }
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 2, false);
         r = MEMTX_OK;
     }
     if (result) {
@@ -384,7 +400,11 @@ void glue(address_space_stl_notdirty, SUFFIX)(ARG1_DECL,
         /*location=*/RR_CALLSITE_WRITE_4);
     } else {
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 4, true);
         stl_p(ptr, val);
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 4, true);
 
         dirty_log_mask = memory_region_get_dirty_log_mask(mr);
         dirty_log_mask &= ~(1 << DIRTY_MEMORY_CODE);
@@ -536,7 +556,11 @@ void glue(address_space_stb, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 1, true);
         stb_p(ptr, val);
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 1, true);
         INVALIDATE(mr, addr1, 1);
         r = MEMTX_OK;
     }
@@ -591,6 +615,8 @@ static inline void glue(address_space_stw_internal, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 2, true);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
             stw_le_p(ptr, val);
@@ -602,6 +628,8 @@ static inline void glue(address_space_stw_internal, SUFFIX)(ARG1_DECL,
             stw_p(ptr, val);
             break;
         }
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 2, true);
         INVALIDATE(mr, addr1, 2);
         r = MEMTX_OK;
     }
@@ -688,6 +716,8 @@ static void glue(address_space_stq_internal, SUFFIX)(ARG1_DECL,
     } else {
         /* RAM case */
         ptr = MAP_RAM(mr, addr1);
+        if (panda_use_memcb)
+            panda_callbacks_replay_before_dma(NULL, ptr, addr1, 8, true);
         switch (endian) {
         case DEVICE_LITTLE_ENDIAN:
             stq_le_p(ptr, val);
@@ -699,6 +729,8 @@ static void glue(address_space_stq_internal, SUFFIX)(ARG1_DECL,
             stq_p(ptr, val);
             break;
         }
+        if (panda_use_memcb)
+            panda_callbacks_replay_after_dma(NULL, ptr, addr1, 8, true);
         INVALIDATE(mr, addr1, 8);
         r = MEMTX_OK;
     }

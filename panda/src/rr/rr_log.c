@@ -1120,8 +1120,10 @@ void rr_replay_skipped_calls_internal(RR_callsite_id call_site)
                 host_buf = cpu_physical_memory_map(
                     args.variant.cpu_mem_unmap.addr, &plen,
                     /*is_write=*/1);
+                panda_callbacks_replay_before_dma(current_cpu, host_buf, args.variant.cpu_mem_unmap.addr, plen, 1);
                 memcpy(host_buf, args.variant.cpu_mem_unmap.buf,
                        args.variant.cpu_mem_unmap.len);
+                panda_callbacks_replay_after_dma(current_cpu, host_buf, args.variant.cpu_mem_unmap.addr, plen, 1);
                 cpu_physical_memory_unmap(host_buf, plen,
                                           /*is_write=*/1,
                                           args.variant.cpu_mem_unmap.len);
