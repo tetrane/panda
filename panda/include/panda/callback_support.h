@@ -11,6 +11,9 @@ void panda_callbacks_before_block_translate(CPUState *cpu, target_ulong pc);
 void panda_callbacks_after_block_translate(CPUState *cpu, TranslationBlock *tb);
 bool panda_callbacks_after_find_fast(CPUState *cpu, TranslationBlock *tb, bool panda_bb_invalidate_done, bool *invalidate);
 
+// target-i386/seg_helper.c
+void panda_callbacks_interrupt(CPUState *env, int intno, int is_int, int error_code, target_ulong next_eip, int is_hw);
+
 // target-i386/translate.c
 bool panda_callbacks_insn_translate(CPUState *env, target_ulong pc);
 // softmmu_template.h

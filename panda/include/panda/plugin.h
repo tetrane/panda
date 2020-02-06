@@ -34,6 +34,7 @@ typedef enum panda_cb_type {
     PANDA_CB_BEFORE_BLOCK_EXEC_INVALIDATE_OPT,    // Before executing each basic block (with option to invalidate, may trigger retranslation)
     PANDA_CB_BEFORE_BLOCK_EXEC,         // Before executing each basic block
     PANDA_CB_AFTER_BLOCK_EXEC,          // After executing each basic block
+    PANDA_CB_BEFORE_INTERRUPT,          // Before an interrupt is executed
     PANDA_CB_INSN_TRANSLATE,    // Before an insn is translated
     PANDA_CB_INSN_EXEC,         // Before an insn is executed
 
@@ -150,6 +151,23 @@ typedef union panda_cb {
 
     */
     int (*after_block_translate)(CPUState *env, TranslationBlock *tb);
+
+    /* Callback ID: PANDA_CB_BEFORE_INTERRUPT
+
+       before_interrupt: called before an interrupt is executed
+
+       Arguments:
+        CPUState *env: the current CPU state
+        is_int: is TRUE if coming from the int instruction.
+        error_code: is the interrupt error code
+        next_eip: is the env->eip value AFTER the interrupt instruction. It is only relevant if is_int is TRUE
+        is_hw: whether it is a hardware interrupt
+
+       Return value:
+        unused
+
+    */
+    int (*before_interrupt)(CPUState *env,  int intno, int is_int, int error_code, target_ulong next_eip, int is_hw);
 
     /* Callback ID: PANDA_CB_INSN_TRANSLATE
 

@@ -30,6 +30,8 @@
 #include "panda/rr/rr_log.h"
 #endif
 
+#include "panda/callback_support.h"
+
 //#define DEBUG_PCALL
 
 #ifdef DEBUG_PCALL
@@ -1212,6 +1214,8 @@ static void do_interrupt_all(X86CPU *cpu, int intno, int is_int,
                              int error_code, target_ulong next_eip, int is_hw)
 {
     CPUX86State *env = &cpu->env;
+
+    panda_callbacks_interrupt(CPU(cpu), intno, is_int, error_code, next_eip, is_hw);
 
     if (qemu_loglevel_mask(CPU_LOG_INT)) {
         if ((env->cr[0] & CR0_PE_MASK)) {

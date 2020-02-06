@@ -98,6 +98,13 @@ bool panda_callbacks_after_find_fast(CPUState *cpu, TranslationBlock *tb, bool b
     return false;
 }
 
+void panda_callbacks_interrupt(CPUState *env, int intno, int is_int, int error_code, target_ulong next_eip, int is_hw) {
+    panda_cb_list *plist;
+    for(plist = panda_cbs[PANDA_CB_BEFORE_INTERRUPT]; plist != NULL;
+        plist = panda_cb_list_next(plist)) {
+        plist->entry.before_interrupt(env, intno, is_int, error_code, next_eip, is_hw);
+    }
+}
 
 // These are used in target-i386/translate.c
 bool panda_callbacks_insn_translate(CPUState *env, target_ulong pc) {
