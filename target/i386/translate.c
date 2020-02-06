@@ -8482,6 +8482,13 @@ void gen_intermediate_code(CPUX86State *env, TranslationBlock *tb)
         }
 #endif
 
+        // _REVEN_: update instruction operator (for eflags update)
+        // this method gives better performance and more correct result than
+        // one forcing one-instruction translation block
+        if (rr_in_replay() && panda_update_pc) {
+            gen_update_cc_op(dc);
+        }
+
         // PANDA: ask if anyone wants execution notification
         if (unlikely(panda_callbacks_insn_translate(ENV_GET_CPU(env), pc_ptr))) {
             gen_helper_panda_insn_exec(tcg_const_tl(pc_ptr));
