@@ -34,6 +34,7 @@ typedef enum panda_cb_type {
                                                // retranslation)
     PANDA_CB_BEFORE_BLOCK_EXEC,     // Before executing each basic block
     PANDA_CB_AFTER_BLOCK_EXEC,      // After executing each basic block
+    PANDA_CB_BEFORE_INTERRUPT,      // Before an interrupt is executed
     PANDA_CB_INSN_TRANSLATE,        // Before an insn is translated
     PANDA_CB_INSN_EXEC,             // Before an insn is executed
     PANDA_CB_AFTER_INSN_TRANSLATE,  // After an insn is translated
@@ -217,6 +218,27 @@ typedef union panda_cb {
         none
     */
     void (*before_cpu_exec_exit)(CPUState *env, bool ranBlock);
+
+    /* Callback ID: PANDA_CB_BEFORE_INTERRUPT
+
+       before_interrupt:
+        Called before an interrupt is executed.
+
+       Arguments:
+        CPUState *env: the current CPU state
+        intno:         the interrupt number
+        is_int:        true if coming from the int instruction.
+        error_code:    the interrupt error code
+        next_pc:       the pc value AFTER the interrupt instruction, only relevant if is_int is true
+        is_hw:         indicates whether it is a hardware interrupt
+
+       Helper call location: target/i386/seg_helper.c
+
+       Return value:
+        none
+
+    */
+    void (*before_interrupt)(CPUState *env, int intno, bool is_int, int error_code, target_ptr_t next_pc, bool is_hw);
 
     /* Callback ID: PANDA_CB_INSN_TRANSLATE
 

@@ -147,6 +147,14 @@ void PCB(before_cpu_exec_exit)(CPUState *cpu, bool ranBlock) {
     }
 }
 
+void PCB(before_interrupt)(CPUState *cpu, int intno, bool is_int, int error_code, target_ptr_t next_pc, bool is_hw) {
+    panda_cb_list *plist;
+    for (plist = panda_cbs[PANDA_CB_BEFORE_INTERRUPT];
+         plist != NULL; plist = panda_cb_list_next(plist)) {
+        if (plist->enabled) plist->entry.before_interrupt(cpu, intno, is_int, error_code, next_pc, is_hw);
+    }
+}
+
 // These are used in target-i386/translate.c
 bool PCB(insn_translate)(CPUState *env, target_ptr_t pc) {
     panda_cb_list *plist;
