@@ -128,6 +128,9 @@ int panda_callbacks_asid_changed(CPUState *env, target_ptr_t oldval, target_ptr_
 /* invoked from target/i386/misc_helper.c */
 bool panda_callbacks_guest_hypercall(CPUState *env);
 
+/* invoked from target/i386/seg_helper.c */
+void panda_callbacks_before_interrupt(CPUState *env, int intno, bool is_int, int error_code, target_ptr_t next_pc, bool is_hw);
+
 /* invoked from translate-all.c */
 void panda_callbacks_cpu_restore_state(CPUState *env, TranslationBlock *tb);
 
