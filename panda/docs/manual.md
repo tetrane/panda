@@ -594,6 +594,7 @@ PANDA_CB_AFTER_BLOCK_TRANSLATE, // After translating each basic block
 PANDA_CB_BEFORE_BLOCK_EXEC_INVALIDATE_OPT,    // Before executing each basic block (with option to invalidate, may trigger retranslation)
 PANDA_CB_BEFORE_BLOCK_EXEC,     // Before executing each basic block
 PANDA_CB_AFTER_BLOCK_EXEC,      // After executing each basic block
+PANDA_CB_BEFORE_INTERRUPT,      // Before an interrupt is executed
 PANDA_CB_INSN_TRANSLATE,        // Before an instruction is translated
 PANDA_CB_INSN_EXEC,             // Before an instruction is executed
 PANDA_CB_AFTER_INSN_TRANSLATE,  // After an insn is translated
@@ -1354,6 +1355,28 @@ int (*after_block_exec)(CPUState *env, TranslationBlock *tb, uint8_t exitCode);
 ```
 ---
 
+`before_interrupt`: called before an interrupt is executed
+
+**Callback ID**: `PANDA_CB_BEFORE_INTERRUPT`
+
+**Arguments**:
+
+* `CPUState *env`: the current CPU state
+* `int intno`: the interrupt number
+* `bool is_int`: true if coming from the int instruction.
+* `int error_code`: the interrupt error code
+* `target_ptr_t next_pc`: the pc value AFTER the interrupt instruction, only relevant if is_int is true
+* `bool is_hw`: indicates whether it is a hardware interrupt
+
+**Return value**:
+
+none
+
+**Signature:**:
+```C
+void (*before_interrupt)(CPUState *env, int intno, bool is_int, int error_code, target_ptr_t next_pc, bool is_hw);
+```
+---
 
 `insn_translate`: called before the translation of each instruction
 
