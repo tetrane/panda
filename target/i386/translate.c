@@ -29,7 +29,7 @@
 #include "panda/rr/rr_log.h"
 #include "panda/rr/rr_api.h"
 #include "panda/checkpoint.h"
-extern bool panda_update_pc;
+#include "panda/plugin.h"
 #endif
 
 #include "panda/callbacks/cb-support.h"
