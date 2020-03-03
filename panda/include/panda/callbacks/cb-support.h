@@ -56,10 +56,10 @@ exit 0
 
 #include <stdbool.h>
 #include "panda/types.h"
-#ifndef EXEC_ALL_H
+
 // If this file is included from a file that doesn't define TranslationBlock (e.g., memory.c), we still need to be valid
-typedef struct {} TranslationBlock;
-#endif
+typedef struct TranslationBlock TranslationBlock;
+
 /* shared helpers for virtual/physical memory callbacks */
 void panda_callbacks_mem_before_read(CPUState *env, target_ptr_t pc, target_ptr_t addr, size_t data_size, void *ram_ptr);
 void panda_callbacks_mem_after_read(CPUState *env, target_ptr_t pc, target_ptr_t addr, size_t data_size, uint64_t result, void *ram_ptr);
