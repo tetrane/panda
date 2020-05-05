@@ -1,0 +1,19 @@
+stages:
+    - build
+
+build:linux:
+  image: debian:stretch-slim
+  stage: build
+  interruptible: true
+  script:
+    - env
+    - apt-get update -qq && apt-get install -y -qq lsb-release build-essential cmake
+    - ./DEPENDENCIES_DEV.sh
+    - mkdir -p output/
+    - ./configure --disable-vhost-net --disable-strip --target-list=x86_64-softmmu --prefix="$(realpath output/)"
+    - make
+    - make install
+
+  artifacts:
+      paths:
+          - output/
