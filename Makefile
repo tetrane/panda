@@ -606,7 +606,7 @@ newrplen=$(shell newrp="$(panda_plugindir)/$(ARCH)" ; eval echo $${\#newrp})
 # Fetch current RPATH from an .so file - doesn't matter which plugin it is for.
 archdir=$(filter $(ARCH)-%,$(TARGET_DIRS))
 pwdvar=$(shell pwd)
-pathtoso=$(shell echo "$(pwdvar)/$(archdir)/panda/plugins/panda_stringsearch.so")
+pathtoso=$(shell echo "$(pwdvar)/$(archdir)/panda/plugins/panda_reven_icount.so")
 cpout=$(shell chrpath -l "$(pathtoso)")
 # The old RPATH will include a "RPATH=" prefix - the size calculation will
 # adjust for that later.
