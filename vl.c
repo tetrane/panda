@@ -2005,7 +2005,10 @@ void main_loop(void)
             rr_do_end_record();
             rr_reset_state(first_cpu);
             rr_control.next = RR_NOCHANGE;
-            vm_start();
+            if (rr_control.start_vm_on_end_record) {
+                rr_control.start_vm_on_end_record = false;
+                vm_start();
+            }
         } else if (unlikely((rr_control.next == RR_OFF) && rr_in_replay())) {
             //mz restore timers
             qemu_clock_run_all_timers();

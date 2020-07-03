@@ -62,7 +62,7 @@
 /* GLOBALS */
 /******************************************************************************************/
 // record/replay state
-rr_control_t rr_control = {.mode = RR_OFF, .next = RR_NOCHANGE};
+rr_control_t rr_control = {.mode = RR_OFF, .next = RR_NOCHANGE, .start_vm_on_end_record = false};
 extern bool panda_library_mode;
 
 // mz FIFO queue of log entries read from the log file
@@ -1360,7 +1360,10 @@ void qmp_begin_record_from(const char* snapshot, const char* filename,
 
 void qmp_end_record(Error** errp)
 {
-    qmp_stop(NULL);
+    if (runstate_is_running()) {
+        qmp_stop(NULL);
+        rr_control.start_vm_on_end_record = true;
+    }
     panda_record_end();
 }
 

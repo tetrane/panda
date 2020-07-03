@@ -56,6 +56,7 @@ typedef struct {
     volatile sig_atomic_t next;
     char *name;
     char *snapshot;
+    bool start_vm_on_end_record;
 } rr_control_t;
 
 /** @brief Global encapsulating requests to switch between PANDA modes. */
