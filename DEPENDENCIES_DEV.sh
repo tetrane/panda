@@ -20,6 +20,25 @@ qemu-utils
 zlib1g-dev
 "
 
+BUSTER_DEPENDENCIES="$BUSTER_DEPENDENCIES
+chrpath
+libc++-dev
+libcapstone-dev
+libdwarf-dev
+libelf-dev
+libfdt-dev
+libglib2.0-dev
+libpixman-1-dev
+libprotobuf-c-dev
+libprotoc-dev
+pkg-config
+protobuf-c-compiler
+protobuf-compiler
+python-pycparser
+qemu-utils
+zlib1g-dev
+"
+
 function echo_error() {
     echo -ne '\033[0;31m'
     echo $@
