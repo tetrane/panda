@@ -1360,11 +1360,18 @@ void qmp_begin_record_from(const char* snapshot, const char* filename,
 
 void qmp_end_record(Error** errp)
 {
-    if (runstate_is_running()) {
+    bool runstate_was_running = runstate_is_running();
+    if (runstate_was_running) {
         qmp_stop(NULL);
         rr_control.start_vm_on_end_record = true;
     }
-    panda_record_end();
+
+    bool end_record_not_ok = panda_record_end() != RRCTRL_OK;
+    if (end_record_not_ok && runstate_was_running) {
+        // resume VM
+        vm_start();
+        rr_control.start_vm_on_end_record = false;
+    }
 }
 
 void qmp_begin_replay(const char *filename, Error **errp) {
