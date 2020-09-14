@@ -565,6 +565,8 @@ static inline bool cpu_handle_exception(CPUState *cpu, int *ret)
 static inline bool cpu_handle_interrupt(CPUState *cpu,
                                         TranslationBlock **last_tb)
 {
+    static uint32_t tetrane_counter = 0;
+
     CPUClass *cc = CPU_GET_CLASS(cpu);
     int interrupt_request = cpu->interrupt_request;
 #ifdef CONFIG_SOFTMMU
@@ -589,6 +591,7 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
         if (interrupt_request & CPU_INTERRUPT_DEBUG) {
             cpu->interrupt_request &= ~CPU_INTERRUPT_DEBUG;
             cpu->exception_index = EXCP_DEBUG;
+            tetrane_counter = 0;
             return true;
         }
         if (replay_mode == REPLAY_MODE_PLAY && !replay_has_interrupt()) {
@@ -598,6 +601,7 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
             cpu->interrupt_request &= ~CPU_INTERRUPT_HALT;
             cpu->halted = 1;
             cpu->exception_index = EXCP_HLT;
+            tetrane_counter = 0;
             return true;
         }
 #if defined(TARGET_I386)
@@ -608,12 +612,14 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
             cpu_svm_check_intercept_param(env, SVM_EXIT_INIT, 0, 0);
             do_cpu_init(x86_cpu);
             cpu->exception_index = EXCP_HALTED;
+            tetrane_counter = 0;
             return true;
         }
 #else
         else if (interrupt_request & CPU_INTERRUPT_RESET) {
             replay_interrupt();
             cpu_reset(cpu);
+            tetrane_counter = 0;
             return true;
         }
 #endif
@@ -647,6 +653,16 @@ static inline bool cpu_handle_interrupt(CPUState *cpu,
     }
     if (unlikely(atomic_read(&cpu->exit_request) || replay_has_interrupt())) {
         atomic_set(&cpu->exit_request, 0);
+        cpu->exception_index = EXCP_INTERRUPT;
+        tetrane_counter = 0;
+        return true;
+    }
+
+    tetrane_counter += 1;
+    tetrane_counter %= 10000000;
+
+    if (tetrane_counter == 0) {
+        fprintf(stderr, "Tetrane: Unlocking manually the cpu-exec\n");
         cpu->exception_index = EXCP_INTERRUPT;
         return true;
     }
