@@ -179,18 +179,7 @@ bool PCB(after_insn_translate)(CPUState *env, target_ptr_t pc) {
 }
 
 static inline hwaddr get_paddr(CPUState *cpu, target_ptr_t addr, void *ram_ptr) {
-    if (!ram_ptr) {
-        return panda_virt_to_phys(cpu, addr);
-    }
-
-    ram_addr_t offset = 0;
-    RAMBlock *block = qemu_ram_block_from_host(ram_ptr, false, &offset);
-    if (!block) {
-        return panda_virt_to_phys(cpu, addr);
-    } else {
-        assert(block->mr);
-        return block->mr->addr + offset;
-    }
+    return panda_virt_to_phys(cpu, addr);
 }
 
 typedef struct {
