@@ -1,4 +1,5 @@
 venv
+/installer.py
 /build
 /config-devices.*
 /config-all-devices.*

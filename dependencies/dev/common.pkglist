@@ -1,0 +1,15 @@
+chrpath
+libc++-dev
+libcapstone-dev
+libdwarf-dev
+libelf-dev
+libfdt-dev
+libglib2.0-dev
+libpixman-1-dev
+libprotoc-dev
+pkg-config
+protobuf-c-compiler
+protobuf-compiler
+python-pycparser
+qemu-utils
+zlib1g-dev
