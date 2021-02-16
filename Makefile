@@ -597,12 +597,16 @@ ifneq (,$(findstring qemu-ga,$(TOOLS)))
 endif
 endif
 
+# This hack is needed with `make` >=4.3
+# More details can be found in the changelog: https://lwn.net/Articles/810071/
+number_sign := \#
+
 # The install target won't succeed if the RPATH in the .so files is longer than
 # the value need to change it to for installation purposes.  It does not matter
 # which architecture is used for the comparison - it shows up once in both the
 # new and old RPATHs, so the differences cancel out.
 # Calculate length of new RPATH.
-newrplen=$(shell newrp="$(panda_plugindir)/$(ARCH)" ; eval echo $${\#newrp})
+newrplen=$(shell newrp="$(panda_plugindir)/$(ARCH)" ; eval echo $${$(number_sign)newrp})
 # Fetch current RPATH from an .so file - doesn't matter which plugin it is for.
 archdir=$(filter $(ARCH)-%,$(TARGET_DIRS))
 pwdvar=$(shell pwd)
@@ -611,7 +615,7 @@ cpout=$(shell chrpath -l "$(pathtoso)")
 # The old RPATH will include a "RPATH=" prefix - the size calculation will
 # adjust for that later.
 rppart=$(lastword $(cpout))
-newtoobig=$(shell oldrp="$(rppart)" ; oldrplen=`expr $${\#oldrp} - 6` ; if [ $$oldrplen -lt $(newrplen) ] ; then echo true ; else echo false ; fi)
+newtoobig=$(shell oldrp="$(rppart)" ; oldrplen=`expr $${$(number_sign)oldrp} - 6` ; if [ $$oldrplen -lt $(newrplen) ] ; then echo true ; else echo false ; fi)
 
 install: all $(if $(BUILD_DOCS),install-doc) install-datadir install-localstatedir
 ifeq ($(newtoobig), false)
